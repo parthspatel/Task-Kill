@@ -20,3 +20,10 @@ Another way is to right-click the .exe file.  Click on properties, near the bott
 Under properties go to the Compatibility tab.  At the bottom of the compatibility tab you will see "Run this program as an administrator", ensure that the box is ticked.
 
 TaskKiller.exe > Right-Click > Properties > Compatibility > Run this program as an administrator
+
+
+## Use:
+
+If you want to close all non-responsive programs leave the Process Name box blank, however if you want to force close a specific application, then type that application name in.
+
+For example, if I wanted to close Google Chrome when it becomes unresponsive I would put "chrome.exe".  These values can be found in the task manager.  Find the process you are looking to force close under the process tab.  Right-click said process and click "Go to details".  It will take you to the details tab, and will highlight the process, that is the name you will want to put in the Process Name box.
