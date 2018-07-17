@@ -27,7 +27,8 @@ class TaskKillThread(QThread):
 
     def run(self):
         while True:
-            os.system('''taskkill /f /fi "status eq not responding"''')
+            #/im MapleStory.exe
+            os.system('''taskkill /f /fi "status eq not responding" /t''')
             time.sleep(10)
 
 
