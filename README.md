@@ -1,4 +1,4 @@
-# Task Killer
+# Task Killer - v3
 
 A desktop application to force close non-responsive programs.
 
