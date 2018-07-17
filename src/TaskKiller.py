@@ -1,7 +1,10 @@
 import os
 import sys
 import ctypes
+import re
 import time
+from datetime import datetime
+from subprocess import Popen, PIPE, check_output
 
 try:
     from PyQt5.QtWidgets import *
@@ -19,22 +22,60 @@ PAD_SIZE = 20
 
 class TaskKillThread(QThread):
 
-    def __init__(self, line_edit=None):
+    def __init__(self, process_name_line_edit=None, time_to_wait=None):
         QThread.__init__(self)
-        self.line_edit = line_edit
+        self.process_name_line_edit = process_name_line_edit
+        self.time_to_wait = time_to_wait
 
     def __del__(self):
         self.wait()
 
+    def get_processes_not_responsive(self):
+        """
+        Takes tasklist output and parses the table into a dict
+        """
+        tasks = check_output('tasklist /fi "status eq not responding"').decode('cp866', 'ignore').split("\r\n")
+        p = []
+        for task in tasks:
+            m = re.match(b'(.*?)\\s+(\\d+)\\s+(\\w+)\\s+(\\w+)\\s+(.*?)\\s.*', task.encode())
+            if m is not None:
+                p.append({'name': m.group(1).decode(),
+                          'pid': int(m.group(2).decode()),
+                          'session_name': m.group(3).decode(),
+                          'session_num': int(m.group(4).decode()),
+                          'mem_usage': int(m.group(5).decode('ascii', 'ignore').replace(',', ''))
+                          })
+        return(p)
+
     def run(self):
-        # TASKLIST /FI "status eq not responding"
-        cmd = r'taskkill /f /fi "status eq not responding"'
+        cache = {}
         while True:
-            process_name = self.line_edit.text()
-            if process_name:
-                os.system(cmd + ' /im ' + str(process_name) + ' /t')
-            else:
-                os.system(cmd + ' /t')
+            # Initalize Variables
+            time_to_wait = self.time_to_wait.text() if not self.time_to_wait.text() else 60
+            time_to_wait = int(time_to_wait)
+
+            process_name = self.process_name_line_edit.text()
+
+            # Clean cache and force close
+            for entry in list(cache):
+                if time.time() - cache[entry][1] > time_to_wait:
+                    print('{}s have passed for: {}'.format(time_to_wait, entry))
+                    try:
+                        if process_name in entry or process_name is None:
+                            os.system('taskkill /PID {} /f'.format(entry[0]))
+                            del cache[entry]
+                    except KeyError:
+                        continue
+
+            # Get all non-responding processes
+            processes = self.get_processes_not_responsive()
+
+            # Add to cache
+            for process in processes:
+                if process['name'] in cache:
+                    continue
+                cache.update({process['name']: [process['pid'], time.time()]})
+
             time.sleep(10)
 
 
@@ -58,7 +99,8 @@ class TaskKiller(QMainWindow):
 
         self.startEvent()
 
-        self.myThread = TaskKillThread(line_edit=self.ProcessLineEdit)
+        self.myThread = TaskKillThread(process_name_line_edit=self.ProcessLineEdit,
+                                       time_to_wait=self.TimeLineEdit)
         self.myThread.start()
 
     def initUI(self):
@@ -67,7 +109,6 @@ class TaskKiller(QMainWindow):
         self.setWindowIcon(QIcon('./logo.png'))
 
         # Process Name Label
-        # Server Status Img
         self.ProcessLabel = QLabel(self)
         self.ProcessLabel.setText('Process Name: ')
         self.ProcessLabel.move(PAD_SIZE, PAD_SIZE * 2)
@@ -76,8 +117,18 @@ class TaskKiller(QMainWindow):
         self.ProcessLineEdit = QLineEdit(self)
         self.ProcessLineEdit.setPlaceholderText('Process Name')
         self.ProcessLineEdit.setReadOnly(False)
-
         self.ProcessLineEdit.move(PAD_SIZE + self.ProcessLabel.x() + self.ProcessLabel.width(), self.ProcessLabel.y())
+
+        # Time To Wait Label
+        self.TimeLabel = QLabel(self)
+        self.TimeLabel.setText('Time to Wait: ')
+        self.TimeLabel.move(PAD_SIZE + self.ProcessLineEdit.x() + self.ProcessLineEdit.width(), self.ProcessLineEdit.y())
+
+        # Time To Wait Line Edit
+        self.TimeLineEdit = QLineEdit(self)
+        self.TimeLineEdit.setText('60')
+        self.TimeLineEdit.setReadOnly(False)
+        self.TimeLineEdit.move(PAD_SIZE + self.TimeLabel.x() + self.TimeLabel.width(), self.TimeLabel.y())
 
     def startEvent(self):
         self.showNormal()
@@ -161,8 +212,8 @@ def closeApp(app):
 
 
 if __name__ == '__main__':
-    if not isUserAdmin():
-        print("> User account does not have admin controls, rerunning with admin controls")
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    # if not isUserAdmin():
+    #     print("> User account does not have admin controls, rerunning with admin controls")
+    #     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
     app = runApp(TaskKiller)
     closeApp(app)
