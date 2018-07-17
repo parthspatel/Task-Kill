@@ -33,4 +33,4 @@ For example, if I wanted to close Google Chrome when it becomes unresponsive I w
 
 ## TODO:
 
-* Add a cashe system, to close programs after they have been unresponsive after some time.
+* Add a cache system, to close programs after they have been unresponsive after some time.
