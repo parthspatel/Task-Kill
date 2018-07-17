@@ -27,6 +27,7 @@ class TaskKillThread(QThread):
         self.wait()
 
     def run(self):
+        # TASKLIST /FI "status eq not responding"
         cmd = r'taskkill /f /fi "status eq not responding"'
         while True:
             process_name = self.line_edit.text()
