@@ -62,7 +62,8 @@ class TaskKillThread(QThread):
                     print('{}s have passed for: {}'.format(time_to_wait, entry))
                     try:
                         if process_name in entry or process_name is None:
-                            os.system('taskkill /PID {} /f'.format(entry[0]))
+                            print('Closing: {}'.format(entry))
+                            os.system('taskkill /PID {} /f'.format(cache[entry][0]))
                             del cache[entry]
                     except KeyError:
                         continue
