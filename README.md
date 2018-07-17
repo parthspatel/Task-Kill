@@ -30,7 +30,4 @@ If you want to close all non-responsive programs leave the Process Name box blan
 
 For example, if I wanted to close Google Chrome when it becomes unresponsive I would put "chrome.exe".  These values can be found in the task manager.  Find the process you are looking to force close under the process tab.  Right-click said process and click "Go to details".  It will take you to the details tab, and will highlight the process, that is the name you will want to put in the Process Name box.
 
-
-## TODO:
-
-* Add a cache system, to close programs after they have been unresponsive after some time.
+If you want to close the unresponsive applications after they have been unresponsive for some amount of time, change the value in the "Time to Wait" box.

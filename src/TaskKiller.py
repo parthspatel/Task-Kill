@@ -49,6 +49,7 @@ class TaskKillThread(QThread):
 
     def run(self):
         cache = {}
+        track = {}
         while True:
             # Initalize Variables
             try:
@@ -61,14 +62,14 @@ class TaskKillThread(QThread):
 
             # Clean cache and force close
             for entry in list(cache):
-                print(entry)
-                print(time.time() - cache[entry][1])
+                if not entry:
+                    continue
                 if time.time() - cache[entry][1] > time_to_wait:
-                    print('{}s have passed for: {}\tPID: {}'.format(time_to_wait, entry, cache[entry][0]))
+                    print('{}s have passed for: PID{}\tName: {}'.format(time_to_wait, entry, cache[entry][0]))
                     try:
-                        if process_name in entry or process_name is None:
-                            print('Closing: Name: {}\tPID: {}'.format(entry, cache[entry][0]))
-                            os.system('taskkill /PID {} /f'.format(cache[entry][0]))
+                        continue
+                        if process_name in cache[entry][0] or process_name is None:
+                            os.system('taskkill /PID {} /f'.format(entry))
                             del cache[entry]
                     except KeyError:
                         continue
@@ -78,11 +79,15 @@ class TaskKillThread(QThread):
 
             # Add to cache
             for process in processes:
-                if process['name'] in cache:
+                if process['pid'] in cache:
                     continue
-                cache.update({process['name']: [process['pid'], time.time()]})
+                if process['pid'] not in cache and process['pid'] in track:
+                    del cache[process['pid']]
+                    del track[process['pid']]
 
-            time.sleep(5)
+                track.update({process['pid']: 1})
+                cache.update({process['pid']: [process['name'], time.time()]})
+            time.sleep(1)
 
 
 class TaskKiller(QMainWindow):
@@ -127,7 +132,7 @@ class TaskKiller(QMainWindow):
 
         # Time To Wait Label
         self.TimeLabel = QLabel(self)
-        self.TimeLabel.setText('Time to Wait: ')
+        self.TimeLabel.setText('Time to Wait (s): ')
         self.TimeLabel.move(PAD_SIZE + self.ProcessLineEdit.x() + self.ProcessLineEdit.width(), self.ProcessLineEdit.y())
 
         # Time To Wait Line Edit
