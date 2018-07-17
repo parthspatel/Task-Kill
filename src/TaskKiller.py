@@ -51,18 +51,23 @@ class TaskKillThread(QThread):
         cache = {}
         while True:
             # Initalize Variables
-            time_to_wait = self.time_to_wait.text() if not self.time_to_wait.text() else 60
-            time_to_wait = int(time_to_wait)
+            try:
+                time_to_wait = self.time_to_wait.text()
+                time_to_wait = int(time_to_wait)
+            except:
+                time_to_wait = 60
 
             process_name = self.process_name_line_edit.text()
 
             # Clean cache and force close
             for entry in list(cache):
+                print(entry)
+                print(time.time() - cache[entry][1])
                 if time.time() - cache[entry][1] > time_to_wait:
-                    print('{}s have passed for: {}'.format(time_to_wait, entry))
+                    print('{}s have passed for: {}\tPID: {}'.format(time_to_wait, entry, cache[entry][0]))
                     try:
                         if process_name in entry or process_name is None:
-                            print('Closing: {}'.format(entry))
+                            print('Closing: Name: {}\tPID: {}'.format(entry, cache[entry][0]))
                             os.system('taskkill /PID {} /f'.format(cache[entry][0]))
                             del cache[entry]
                     except KeyError:
@@ -77,7 +82,7 @@ class TaskKillThread(QThread):
                     continue
                 cache.update({process['name']: [process['pid'], time.time()]})
 
-            time.sleep(10)
+            time.sleep(5)
 
 
 class TaskKiller(QMainWindow):
@@ -213,8 +218,8 @@ def closeApp(app):
 
 
 if __name__ == '__main__':
-    # if not isUserAdmin():
-    #     print("> User account does not have admin controls, rerunning with admin controls")
-    #     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    if not isUserAdmin():
+        print("> User account does not have admin controls, rerunning with admin controls")
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
     app = runApp(TaskKiller)
     closeApp(app)
