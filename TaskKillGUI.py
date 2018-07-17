@@ -3,9 +3,15 @@ import sys
 import ctypes
 import time
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+try:
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtCore import *
+except:
+    os.system('pip install pyqt5')
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtCore import *
 
 
 PAD_SIZE = 20
